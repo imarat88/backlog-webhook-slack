@@ -42,4 +42,6 @@ trait WebhookMarshalling extends DefaultJsonProtocol {
 
     override def write(obj: WebhookRequest): JsValue = ???
   }
+
+  implicit val slackWebhookFormat: RootJsonFormat[SlackWebhook] = jsonFormat1(SlackWebhook)
 }

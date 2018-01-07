@@ -21,7 +21,7 @@ object Main extends App
   val host    = config.getString("http.host")
   val port    = config.getInt("http.port")
 
-  val bindingFuture: Future[ServerBinding] = Http().bindAndHandle(routes, host, port)
+  val bindingFuture: Future[ServerBinding] = Http().bindAndHandle(routes(system, materializer, ec), host, port)
 
   val log = Logging(system.eventStream, "backlog-webhook")
 
