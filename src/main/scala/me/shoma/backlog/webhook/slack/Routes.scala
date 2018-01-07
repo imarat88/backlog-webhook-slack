@@ -13,7 +13,7 @@ trait Routes extends WebhookMarshalling {
       post {
         entity(as[WebhookRequest]) { request =>
           println(request)
-          complete(request)
+          complete(request.toString)
         }
       }
     }

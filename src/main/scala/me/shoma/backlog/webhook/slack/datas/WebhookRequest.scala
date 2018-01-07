@@ -1,3 +1,11 @@
 package me.shoma.backlog.webhook.slack.datas
 
-case class WebhookRequest(id: Long)
+import java.time.ZonedDateTime
+
+case class WebhookRequest(
+  id: Long,
+  contentType: ContentType,
+  content: Content,
+  createdUser: User,
+  created: ZonedDateTime
+)
