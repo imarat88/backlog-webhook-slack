@@ -17,22 +17,26 @@ trait Controller extends WebhookMarshalling {
     headers.`Accept-Charset`(HttpCharsets.`UTF-8`)
   )
 
-  def webhookToSlack(webhookRequest: WebhookRequest)
+  def webhookToSlack(backlog: WebhookRequest)
                     (implicit actorSystem: ActorSystem, mat: Materializer, exc: ExecutionContext): Future[HttpResponse] = {
 
     import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 
     val config  = ConfigFactory.load()
-    val url     = config.getString("slack.url")
-    val user = webhookRequest.createdUser.name
-    val text = webhookRequest.contentType match {
-      case ContentType.AddIssue => s"${user}が課題を追加しました。"
+    val slackUrl = config.getString("slack.url")
+    val backlogUrl = config.getString("backlog.url")
+    val user = backlog.createdUser.name
+    val text = backlog.contentType match {
+      case ContentType.AddIssue    => s"${user}が課題を追加しました。$backlogUrl/view/${backlog.project.projectKey}-${backlog.content.key_id}"
+      case ContentType.UpdateIssue => s"${user}が課題を更新しました。$backlogUrl/view/${backlog.project.projectKey}-${backlog.content.key_id}"
+      case ContentType.DeleteIssue => s"${user}が課題を削除しました。$backlogUrl/view/${backlog.project.projectKey}-${backlog.content.key_id}"
+//      case ContentType.CommentPullRequest => s"${user}がプルリクエストを作成しました。$backlogUrl/view/${backlog.project.projectKey}-${backlog.content.key_id}"
       case _ => ""
     }
     val data = SlackWebhook(text)
 
     Marshal(data).to[RequestEntity] flatMap { entity =>
-      val request = HttpRequest(method = HttpMethods.POST, uri = Uri(url), headers = reqHeaders.toList, entity = entity)
+      val request = HttpRequest(method = HttpMethods.POST, uri = Uri(slackUrl), headers = reqHeaders.toList, entity = entity)
       Http().singleRequest(request)
     }
   }

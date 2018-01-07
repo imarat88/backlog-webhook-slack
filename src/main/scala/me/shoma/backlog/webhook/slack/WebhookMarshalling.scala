@@ -16,22 +16,23 @@ trait WebhookMarshalling extends DefaultJsonProtocol {
   implicit object ZonedDateTimeProtocol extends RootJsonFormat[ZonedDateTime] {
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneId.systemDefault)
     def read(json: JsValue): ZonedDateTime = {
-      println(json.convertTo[String])
       ZonedDateTime.parse(json.convertTo[String], formatter)
     }
     def write(obj: ZonedDateTime): JsValue = ???
   }
 
-  implicit val contentFormat: RootJsonFormat[Content] = jsonFormat2(Content)
+  implicit val projectFormat: RootJsonFormat[Project] = jsonFormat1(Project)
+  implicit val contentFormat: RootJsonFormat[Content] = jsonFormat3(Content)
   implicit val userFormat: RootJsonFormat[User]       = jsonFormat1(User)
 
   implicit object WebhookRequestFormat extends RootJsonFormat[WebhookRequest] {
     override def read(json: JsValue): WebhookRequest = {
       val jsObject = json.asJsObject
-      jsObject.getFields("id", "type", "content", "created", "createdUser") match {
-        case Seq(JsNumber(id), contentType, content, created, createdUser) => WebhookRequest(
+      jsObject.getFields("id", "type", "project", "content", "created", "createdUser") match {
+        case Seq(JsNumber(id), contentType, project, content, created, createdUser) => WebhookRequest(
           id          = id.toLong,
           contentType = contentType.convertTo[ContentType],
+          project     = project.convertTo[Project],
           content     = content.convertTo[Content],
           createdUser = createdUser.convertTo[User],
           created     = created.convertTo[ZonedDateTime]
