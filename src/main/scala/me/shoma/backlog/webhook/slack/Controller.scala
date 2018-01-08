@@ -6,7 +6,8 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.stream.Materializer
 import com.typesafe.config.ConfigFactory
-import me.shoma.backlog.webhook.slack.datas.{SlackWebhook, WebhookRequest, ContentType}
+import me.shoma.backlog.webhook.slack.datas._
+import me.shoma.backlog.webhook.slack.datas.{ ContentType => CT }
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -26,16 +27,23 @@ trait Controller extends WebhookMarshalling {
     val slackUrl = config.getString("slack.url")
     val backlogUrl = config.getString("backlog.url")
     val user = backlog.createdUser.name
-    val text = backlog.contentType match {
-      case ContentType.AddIssue    => s"${user}が課題を追加しました。$backlogUrl/view/${backlog.project.projectKey}-${backlog.content.id}"
-      case ContentType.UpdateIssue => s"${user}が課題を更新しました。$backlogUrl/view/${backlog.project.projectKey}-${backlog.content.id}"
-      case ContentType.DeleteIssue => s"${user}が課題を削除しました。$backlogUrl/view/${backlog.project.projectKey}-${backlog.content.id}"
-      case ContentType.AddPullRequest     => s"${user}がプルリクエストを作成しました。"
-      case ContentType.UpdatePullRequest  => s"${user}がプルリクエストを更新しました。"
-      case ContentType.CommentPullRequest => s"${user}がプルリクエストにコメントしました。"
-      case ContentType.DeletePullRequest  => s"${user}がプルリクエストを削除しました。"
+    val text = backlog.content match {
+      case IssueContent(key_id, _, _) => backlog.contentType match {
+        case CT.AddIssue    => s"${user}が課題を追加しました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
+        case CT.UpdateIssue => s"${user}が課題を更新しました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
+        case CT.DeleteIssue => s"${user}が課題を削除しました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
+        case _ => ""
+      }
+      case PullRequestContent(_, _, _) => backlog.contentType match {
+        case CT.AddPullRequest     => s"${user}がプルリクエストを作成しました。"
+        case CT.UpdatePullRequest  => s"${user}がプルリクエストを更新しました。"
+        case CT.CommentPullRequest => s"${user}がプルリクエストにコメントしました。"
+        case CT.DeletePullRequest  => s"${user}がプルリクエストを削除しました。"
+        case _ => ""
+      }
       case _ => ""
     }
+
     val data = SlackWebhook(text)
 
     Marshal(data).to[RequestEntity] flatMap { entity =>

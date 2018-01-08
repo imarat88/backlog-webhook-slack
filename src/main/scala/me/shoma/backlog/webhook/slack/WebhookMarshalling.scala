@@ -21,19 +21,35 @@ trait WebhookMarshalling extends DefaultJsonProtocol {
     def write(obj: ZonedDateTime): JsValue = ???
   }
 
-  implicit val projectFormat: RootJsonFormat[Project] = jsonFormat1(Project)
-  implicit val contentFormat: RootJsonFormat[Content] = jsonFormat3(Content)
-  implicit val userFormat: RootJsonFormat[User]       = jsonFormat1(User)
+  implicit val projectFormat: RootJsonFormat[Project]                       = jsonFormat1(Project)
+  implicit val issueContentFormat: RootJsonFormat[IssueContent]             = jsonFormat3(IssueContent)
+  implicit val pullRequestContentFormat: RootJsonFormat[PullRequestContent] = jsonFormat3(PullRequestContent)
+  implicit val userFormat: RootJsonFormat[User]                             = jsonFormat1(User)
 
   implicit object WebhookRequestFormat extends RootJsonFormat[WebhookRequest] {
     override def read(json: JsValue): WebhookRequest = {
       val jsObject = json.asJsObject
-      jsObject.getFields("id", "type", "project", "content", "created", "createdUser") match {
-        case Seq(JsNumber(id), contentType, project, content, created, createdUser) => WebhookRequest(
+
+      val contentType = jsObject.getFields("type") match {
+        case Seq(value) => value.convertTo[ContentType]
+        case other      => deserializationError("Cannot deserialize ContentType: invalid input. Raw input: " + other)
+      }
+
+      val content = jsObject.getFields("content") match {
+        case Seq(value) => contentType match {
+          case ContentType.AddIssue | ContentType.UpdateIssue | ContentType.CommentIssue | ContentType.DeleteIssue => value.convertTo[IssueContent]
+          case ContentType.AddPullRequest | ContentType.UpdatePullRequest | ContentType.CommentPullRequest | ContentType.DeletePullRequest => value.convertTo[PullRequestContent]
+          case other => deserializationError("Cannot deserialize Content: invalid input. Raw input: " + other)
+        }
+        case other => deserializationError("Cannot deserialize Content: invalid input. Raw input: " + other)
+      }
+
+      jsObject.getFields("id", "project", "created", "createdUser") match {
+        case Seq(JsNumber(id), project, created, createdUser) => WebhookRequest(
           id          = id.toLong,
-          contentType = contentType.convertTo[ContentType],
+          contentType = contentType,
           project     = project.convertTo[Project],
-          content     = content.convertTo[Content],
+          content     = content,
           createdUser = createdUser.convertTo[User],
           created     = created.convertTo[ZonedDateTime]
         )
