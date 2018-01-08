@@ -12,8 +12,8 @@ Notify [slack](https://slack.com) of [Backlog](https://backlog.com/) changes.
 
 |Name|Example|
 |:---|:------|
-|BACKLOG_URL|https://YOUR_SPACE_NAME.backlog.com|
-|SLACK_URL||
+| BACKLOG_URL | https://YOUR_SPACE_NAME.backlog.com |
+| SLACK_URL | https://hooks.slack.com/services/XXXXXXXXX/YYYYYYYYY/ZZZZZZZZZ |
 
 ### Example of docker command
     docker run -d --restart=always --name webhook -p 9000:9000 \

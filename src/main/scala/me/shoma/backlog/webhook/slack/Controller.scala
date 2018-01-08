@@ -29,9 +29,10 @@ trait Controller extends WebhookMarshalling {
     val user = backlog.createdUser.name
     val text = backlog.content match {
       case IssueContent(key_id, _, _) => backlog.contentType match {
-        case CT.AddIssue    => s"${user}が課題を追加しました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
-        case CT.UpdateIssue => s"${user}が課題を更新しました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
-        case CT.DeleteIssue => s"${user}が課題を削除しました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
+        case CT.AddIssue     => s"${user}が課題を追加しました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
+        case CT.UpdateIssue  => s"${user}が課題を更新しました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
+        case CT.CommentIssue => s"${user}が課題にコメントしました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
+        case CT.DeleteIssue  => s"${user}が課題を削除しました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
         case _ => ""
       }
       case PullRequestContent(_, _, _) => backlog.contentType match {
