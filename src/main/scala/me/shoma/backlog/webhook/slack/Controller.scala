@@ -28,13 +28,15 @@ trait Controller extends WebhookMarshalling {
     val backlogUrl = config.getString("backlog.url")
     val user = backlog.createdUser.name
     val text = backlog.content match {
-      case IssueContent(key_id, _, _) => backlog.contentType match {
-        case CT.AddIssue     => s"${user}が課題を追加しました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
-        case CT.UpdateIssue  => s"${user}が課題を更新しました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
-        case CT.CommentIssue => s"${user}が課題にコメントしました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
-        case CT.DeleteIssue  => s"${user}が課題を削除しました。$backlogUrl/view/${backlog.project.projectKey}-$key_id"
-        case _ => ""
-      }
+      case IssueContent(key_id, summary, _) =>
+        val url = s"$backlogUrl/view/${backlog.project.projectKey}-$key_id"
+        backlog.contentType match {
+          case CT.AddIssue     => s"${user}が課題を追加しました。\n$summary\n$url"
+          case CT.UpdateIssue  => s"${user}が課題を更新しました。\n$summary\n$url"
+          case CT.CommentIssue => s"${user}が課題にコメントしました。\n$summary\n$url"
+          case CT.DeleteIssue  => s"${user}が課題を削除しました。\n$summary\n$url"
+          case _ => ""
+        }
       case PullRequestContent(_, _, _) => backlog.contentType match {
         case CT.AddPullRequest     => s"${user}がプルリクエストを作成しました。"
         case CT.UpdatePullRequest  => s"${user}がプルリクエストを更新しました。"
